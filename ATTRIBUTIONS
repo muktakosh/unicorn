@@ -1,0 +1,10 @@
+This document states the software used to build, deploy and distribute unicorn.
+
+- "Cargo: The Rust package manager" under the MIT License :: https://crates.io
+- "clap" under the MIT License :: https://github.com/kbknapp/clap-rs/
+- "jsonrpc-core" under the MIT License :: https://github.com/ethcore/jsonrpc-core/
+- "log" under the MIT License :: https://github.com/rust-lang-nursery/log/
+- "serde", "serde_macros" and "serde_codegen" under the MIT License :: https://github.com/serde-rs/serde/
+- "serde_json" under the MIT License :: https://github.com/serde-rs/json/
+- "The Rust Programming Language" (rustc) under the MIT License :: https://rust-lang.org
+- "ws-rs" under the MIT License :: https://github.com/housleyjk/ws-rs/
