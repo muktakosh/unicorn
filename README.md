@@ -43,7 +43,7 @@ This is the list of currently targeted broad feature set for unicorn:
 - [ ] **Decentralization features**
  - [ ] Service discovery
  - [ ] Ledger of known services
- - [ ] Pipelining: Connect to their unicorn instances
+ - [ ] Pipelining: Connect to other unicorn instances
 
 ## About this repository
 
