@@ -28,11 +28,7 @@ impl Log for CLILogger {
 
     fn log(&self, record: &LogRecord) {
         if self.enabled(record.metadata()) {
-            if record.level() == LogLevel::Info {
-                println!("{}", record.args());
-            } else {
-                println!("[{}] - {}", record.level(), record.args());
-            }
+            println!("[{}] - {}", record.level(), record.args());
         }
     }
 }
