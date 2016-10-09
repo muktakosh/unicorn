@@ -81,7 +81,7 @@ This is the list of currently targeted broad feature set for `unicorn`:
  - [ ] Multi-mode config (single instance vs distributed)
 - [ ] **Network layer**
   - [x] JSON-RPC over WebSockets
-  - [ ] Internal communication (possibly `nanomsg`)
+  - [ ] Internal communication (Asynchronous TCP)
 - [ ] **Data transmission features**
   - [ ] Channels (a.k.a Rooms/Topics)
   - [ ] Publishers
