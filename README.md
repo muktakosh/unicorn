@@ -76,8 +76,9 @@ This is the list of currently targeted broad feature set for `unicorn`:
   - [ ] File logger
 - [x] **CLI**: Command line arguments parsing
 - [ ] **Configuration**
- - [ ] Config parser
- - [ ] Config creator
+ - [x] Config parser
+ - [x] Config creator
+ - [ ] Multi-mode config (single instance vs distributed)
 - [ ] **Network layer**
   - [x] JSON-RPC over WebSockets
   - [ ] Internal communication (possibly `nanomsg`)
