@@ -9,24 +9,8 @@ use std::thread;
 use std::error::Error;
 use clap::{App, Arg, SubCommand, AppSettings};
 
-fn run_as_single_process() {
-    info!("Running as single process");
-    let core_th = thread::spawn(move || {
-        unicorn::kernel::run();
-    });
-    core_th.join().unwrap();
-}
-
 fn run_all() {
     info!("Running all components from configuration");
-}
-
-fn show_components_list() {
-    info!("List of components available:");
-    info!("\tkernel");
-    info!("\tlite");
-    info!("\tall");
-    info!("\nUse `unicorn run <component>` to run them. For details, see `unicorn help run`.");
 }
 
 fn init_logger(loglevel: &str) { CLILogger::init(loglevel).unwrap() }
@@ -62,12 +46,9 @@ fn main() {
                     .about("Run a unicorn component or plugin")
                     .arg(Arg::with_name("component")
                          .help("Name of a component or plugin to run")
-                         .index(1))
-                    .arg(Arg::with_name("list-components")
-                         .help("List installed components that can be run")
-                         .short("l")
-                         .long("list-components")
-                         .conflicts_with_all(&["component"])))
+                         .index(1)
+                         .default_value("all")
+                         .possible_values(&["api", "all", "datastore"])))
 
         // Match them up
         .get_matches();
@@ -95,17 +76,12 @@ fn main() {
 
     // Parse the `run` subcommand
     if let Some(ref run) = matches.subcommand_matches("run") {
-
-        if run.is_present("list-components") {
-            show_components_list();
-        }
-
         if run.is_present("component") {
             match run.value_of("component") {
-                Some("kernel") => unicorn::kernel::run(),
-                Some("lite") => run_as_single_process(),
-                Some("all") | None => run_all(),
-                Some(_) => println!("No components matched. See `unicorn run --list-components` for available options.")
+                Some("api") => unicorn::kernel::run(),
+                Some("all") => run_all(),
+                Some("datastore") => unimplemented!(),
+                Some(_) | None => println!("No components matched. See `unicorn help run` for available options.")
             }
         }
     }
