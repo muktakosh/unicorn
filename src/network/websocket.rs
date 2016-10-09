@@ -3,12 +3,8 @@
 use ws::{WebSocket as WS, Factory, Sender, Handler, Result, Message, Handshake, CloseCode};
 use jsonrpc_core::{IoHandler, SyncMethodCommand, AsyncMethodCommand};
 
-use std::collections::HashMap;
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::sync::Arc;
 use std::fmt;
-
-type SocketRegistry = Rc<RefCell<HashMap<u64, Sender>>>;
 
 /// Types of `Socket`
 pub enum SocketType {
@@ -26,31 +22,30 @@ impl fmt::Display for SocketType {
     }
 }
 
-/// WebSocket handler that handles each client
+/// WebSocket handler that handles each connection
 struct SocketHandler {
     id: u64,
     sender: Sender,
-    jrpc_handler: Rc<IoHandler>,
+    jrpc_handler: Arc<IoHandler>,
     conn_type: SocketType,
-    registry: SocketRegistry,
-}
-
-impl SocketHandler {
-    fn add_sender(&self, id: u64, sender: Sender) {
-        debug!("[socket] Adding sender: {}. Type: {}", id, self.conn_type);
-        self.registry.borrow_mut().insert(id, sender);
-    }
 }
 
 impl Handler for SocketHandler {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
-        self.add_sender(self.id, self.sender.clone());
+        debug!("[socket] Opening connection. sender: {}. Type: {}",
+               self.id,
+               self.conn_type);
+        // TODO: Perform tasks immediately after connection open.
         Ok(())
     }
 
     fn on_message(&mut self, m: Message) -> Result<()> {
-        if let Some(s) = self.jrpc_handler.handle_request_sync(m.as_text().unwrap_or("")) {
-            try!(self.sender.send(Message::text(s)));
+        let sclone = self.sender.clone();
+
+        if let Some(ps) = self.jrpc_handler.handle_request(m.as_text().unwrap_or("")) {
+            ps.on_result(move |s: String| {
+                let _ = sclone.send(Message::text(s));
+            });
         }
         Ok(())
     }
@@ -59,14 +54,13 @@ impl Handler for SocketHandler {
         debug!("[socket] Removing sender: {}. Type: {}",
                self.id,
                self.conn_type);
-        self.registry.borrow_mut().remove(&self.id);
+        // TODO: Do connection cleanup here
     }
 }
 
 /// Factory for generating `SocketHandler`
 struct SocketFactory {
-    jrpc_handler: Rc<IoHandler>,
-    registry: SocketRegistry,
+    jrpc_handler: Arc<IoHandler>,
     counter: u64,
 }
 
@@ -76,7 +70,6 @@ impl SocketFactory {
         SocketHandler {
             id: self.counter,
             sender: s,
-            registry: self.registry.clone(),
             jrpc_handler: self.jrpc_handler.clone(),
             conn_type: t,
         }
@@ -98,7 +91,7 @@ impl Factory for SocketFactory {
 /// JSON-RPC over WebSockets implementation with multi-client support
 pub struct WebSocket {
     sock: Option<WS<SocketFactory>>,
-    jrpc_handler: Rc<IoHandler>,
+    jrpc_handler: Arc<IoHandler>,
 }
 
 impl WebSocket {
@@ -106,17 +99,17 @@ impl WebSocket {
         // Do more stuff here
         WebSocket {
             sock: None,
-            jrpc_handler: Rc::new(IoHandler::new()),
+            jrpc_handler: Arc::new(IoHandler::new()),
         }
     }
 
-    pub fn add_method<C>(&mut self, name: &str, command: C)
+    pub fn add_sync_method<C>(&mut self, name: &str, command: C)
         where C: SyncMethodCommand + 'static
     {
         self.jrpc_handler.add_method(name, command);
     }
 
-    pub fn add_async_method<AC>(&mut self, name: &str, command: AC)
+    pub fn add_method<AC>(&mut self, name: &str, command: AC)
         where AC: AsyncMethodCommand + 'static
     {
         self.jrpc_handler.add_async_method(name, command);
@@ -132,7 +125,6 @@ impl WebSocket {
     fn build(mut self) -> Result<Self> {
         let factory = SocketFactory {
             jrpc_handler: self.jrpc_handler.clone(),
-            registry: Rc::new(RefCell::new(HashMap::new())),
             counter: 0,
         };
         let s = try!(WS::new(factory));
