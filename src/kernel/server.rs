@@ -2,9 +2,12 @@
 
 use network::websocket::WebSocket;
 use api;
+use schema::config::{Config, Service};
 
-pub fn run() {
+pub fn run(conf: Config) {
     debug!("Starting kernel...");
+
+    let kernelconf: &Service = conf.services.get("api").unwrap();
 
     let mut socket = WebSocket::new();
 
@@ -12,5 +15,5 @@ pub fn run() {
     socket.add_method("unicorn.register", api::register::RegisterAPI{});
 
     // Start the listener
-    socket.listen("0.0.0.0:60000").unwrap();
+    socket.listen(kernelconf.address().as_ref()).unwrap();
 }

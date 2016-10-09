@@ -9,18 +9,27 @@ use std::thread;
 use std::error::Error;
 use clap::{App, Arg, SubCommand, AppSettings};
 
-fn run_all() {
+fn run_all(conf: unicorn::schema::config::Config) {
     info!("Running all components from configuration");
+    let c1 = conf.clone();
+    let kernel = thread::spawn(move || {
+        unicorn::kernel::run(c1);
+    });
+    let _ = kernel.join();
 }
 
-fn init_logger(loglevel: &str) { CLILogger::init(loglevel).unwrap() }
+fn init_logger(loglevel: &str) {
+    CLILogger::init(loglevel).unwrap()
+}
 
 fn main() {
 
     let v: String = unicorn::get_version();
     let matches = App::new("unicorn")
         .settings(&[AppSettings::ArgRequiredElseHelp,
-                   AppSettings::VersionlessSubcommands])
+                    AppSettings::VersionlessSubcommands,
+                    AppSettings::SubcommandRequiredElseHelp
+        ])
         .version(v.as_str())
         .author("The Muktakosh Project Developers")
         .about("Unified Communications Over Real-time Networks")
@@ -50,6 +59,10 @@ fn main() {
                          .default_value("all")
                          .possible_values(&["api", "all", "datastore"])))
 
+        // Subcommand: `init`
+        .subcommand(SubCommand::with_name("init")
+                    .about("Initialize a unicorn config in current directory"))
+
         // Match them up
         .get_matches();
 
@@ -58,6 +71,21 @@ fn main() {
         init_logger("debug");
     } else {
         init_logger("info");
+    }
+
+    // Init configuration: `init` subcommand
+    if let Some(_) = matches.subcommand_matches("init") {
+        match unicorn::config::init() {
+            Ok(()) => {
+                info!("Created config file in ./unicorn.json");
+                std::process::exit(0);
+            }
+            Err(e) => {
+                error!("Unable to create config file: {}", e.description());
+                std::process::exit(1);
+            }
+        }
+
     }
 
     // Load configuration
@@ -69,19 +97,30 @@ fn main() {
         }
     }
 
-    match unicorn::config::load(configpath) {
-        Ok(s) => debug!("Config:\n\t{:?}", s),
-        Err(e) => error!("Unable to load config file: {}. Error: {}", configpath, e.description())
-    }
+    let conf = match unicorn::config::load(configpath) {
+        Ok(c) => {
+            debug!("Config:\n\t{:?}", c);
+            c
+        }
+        Err(e) => {
+            error!("Invalid config file: {}. Error: {}",
+                   configpath,
+                   e.description());
+            error!("Using default config");
+            unicorn::config::default()
+        }
+    };
 
     // Parse the `run` subcommand
     if let Some(ref run) = matches.subcommand_matches("run") {
         if run.is_present("component") {
             match run.value_of("component") {
-                Some("api") => unicorn::kernel::run(),
-                Some("all") => run_all(),
+                Some("api") => unicorn::kernel::run(conf),
+                Some("all") => run_all(conf),
                 Some("datastore") => unimplemented!(),
-                Some(_) | None => println!("No components matched. See `unicorn help run` for available options.")
+                Some(_) | None => {
+                    println!("No components matched. See `unicorn help run` for available options.")
+                }
             }
         }
     }
