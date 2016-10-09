@@ -1,6 +1,6 @@
 # unicorn
 
-[![Build Status](https://travis-ci.org/muktakosh/unicorn.svg?branch=master)](https://travis-ci.org/muktakosh/unicorn) [![API Docs](https://img.shields.io/badge/docs-API-blue.svg)](https://muktakosh.github.io/unicorn) ![Project Status: Experiment](https://img.shields.io/badge/status-experiment-red.svg)
+[![Build Status](https://travis-ci.org/muktakosh/unicorn.svg?branch=master)](https://travis-ci.org/muktakosh/unicorn)  ![Project Status: Experiment](https://img.shields.io/badge/status-experiment-red.svg)
 
 **`unicorn` is a decentralized, context-aware pipeline for real-time data.**
 

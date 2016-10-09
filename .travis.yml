@@ -10,16 +10,7 @@ matrix:
     - rust: nightly
     - rust: beta
 
-before_script:
-  - pip install 'travis-cargo<0.2' --user && export PATH=$HOME/.local/bin:$PATH
 script:
   - make clean
   - make build
   - make test
-  - make doc
-after_success:
-  - travis-cargo --only stable doc-upload
-
-env:
-  global:
-    secure: qYGRJinp1j6PbOV1L/NxUGBmfGB9DZGhI6hCE/P2lEhbqIXq+BjfVQzGL6ds09Z8jyy0kWlsql+Hf44CT5wMUyNdi8rtQFgLzsGDNjHZzZL8dEGnLwiizjZ3HtU7u8UcS29OCZ+3fFhJFv0c+i9Atsu9/aMIoW+9j7uzU4raZCnWvHC3ZFi9BoJ53TiNdwccve/Gw61ptcJMTDnO2YzNtQeO27YccsvEKdjWZltHTSWnEdWU6TD0mT4xkRHWgQaGxUaoBXLtS50UzoJGOWCTbYbvgzUiJBllD5734E6PPSCLtCQSQr827u/Cqz9CzQVSoxfnOExp/EMVUk5eQF6Khh7GwmK7sieLA1SDVFMNjRLD/dp/QmcX9Fwcd1pVv6+o57/2jvLkngyJAizA+DEWIN9e4xnNg6kL/ZJm3CeHDCg259UmhZFfkWW+0CHWXVJwT7anj3kamXSM3J/orKBNolaaqEMbT+VWEdc9fko7DTkYxgGcFePhUkWc/i91JmC40QNwBLqRX6/1W+icgYz2Cy+Y/DbuOuYyTJDspbYW+sFt0RZ9ad1gscwpsj8XCfqkPgc1vYKu2MlDzmWgNali2Ma7jhugKQPxN5PGkL3aYL34kAnO8GBb1xAjO8yFkLt1+sjVwvae8vlHQ9u+I2VGX+M2Zpay187V0ZhAkMhbxSw=
