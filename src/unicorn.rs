@@ -9,7 +9,7 @@ use std::thread;
 use std::error::Error;
 use clap::{App, Arg, SubCommand, AppSettings};
 
-fn run_all(conf: unicorn::schema::config::Config) {
+fn run_all(conf: unicorn::schema::config_schema::Config) {
     info!("Running all components from configuration");
     let c1 = conf.clone();
     let kernel = thread::spawn(move || {

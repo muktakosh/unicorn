@@ -3,7 +3,7 @@
 use std::io::{Read, Write, Error, ErrorKind};
 use std::fs::File;
 use std::path::Path;
-use schema::config::{Config, Service};
+use schema::config_schema::{Config, Service};
 use serde_json;
 
 pub fn load(f: &str) -> Result<Config, Error> {

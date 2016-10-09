@@ -1,9 +1,10 @@
-/// Run the `kernel` service
+//! Orchestration and task management layer for `unicorn`.
 
 use network::websocket::WebSocket;
 use api;
-use schema::config::{Config, Service};
+use schema::config_schema::{Config, Service};
 
+/// Entry point for `kernel`
 pub fn run(conf: Config) {
     debug!("Starting kernel...");
 
