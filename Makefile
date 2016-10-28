@@ -14,7 +14,13 @@ build-release:
 	cargo build --release
 
 nightly-build:
-	rustup run nightly cargo build --no-default-features --features nightly --verbose
+	rustup run nightly cargo build --no-default-features --features nightly
+
+nightly-build-release:
+	rustup run nightly cargo build --release --no-default-features --features nightly
+
+nightly-build-static:
+	rustup run nightly cargo build --release --no-default-features --features nightly --target=x86_64-unknown-linux-musl
 
 build-static:
 	cargo build --target=x86_64-unknown-linux-musl --release
