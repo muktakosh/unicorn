@@ -6,8 +6,11 @@
 //! platform that can connect any number and combination of clients
 //! (humans or machines).
 
-#![cfg_attr(feature="nightly", feature(custom_derive, plugin))]
-#![cfg_attr(feature="nightly", plugin(serde_macros))]
+#![cfg_attr(feature = "serde_derive", feature(proc_macro))]
+
+#[cfg(feature = "serde_derive")]
+#[macro_use]
+extern crate serde_derive;
 
 extern crate serde;
 extern crate serde_json;
@@ -26,11 +29,11 @@ pub mod logger;
 pub mod network;
 
 /// Defines schemas (datatypes) used by API
-#[cfg(feature = "nightly")]
+#[cfg(feature = "serde_derive")]
 pub mod schema;
 
 /// Defines schemas (datatypes) used by API
-#[cfg(not(feature = "nightly"))]
+#[cfg(feature = "serde_codegen")]
 pub mod schema {
     include!(concat!(env!("OUT_DIR"), "/schema.rs"));
 }

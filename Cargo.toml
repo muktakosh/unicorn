@@ -22,14 +22,15 @@ jsonrpc-core = "3.0"
 serde = "0.8"
 serde_json = "0.8"
 
-serde_macros = { version = "0.8", optional = true }
+serde_derive = { version = "0.8", optional = true }
+#serde_macros = { version = "0.8", optional = true }
 
 [build-dependencies]
 serde_codegen = { version = "0.8", optional = true }
 
 [features]
 default = ["serde_codegen"]
-nightly = ["serde_macros"]
+nightly = ["serde_derive"]
 
 [lib]
 name = "unicorn"

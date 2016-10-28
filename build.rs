@@ -1,4 +1,4 @@
-#[cfg(not(feature = "nightly"))]
+#[cfg(feature = "serde_codegen")]
 mod inner {
     extern crate serde_codegen;
 
@@ -16,7 +16,7 @@ mod inner {
 }
 
 
-#[cfg(feature = "nightly")]
+#[cfg(not(feature = "serde_codegen"))]
 mod inner {
     pub fn main() {}
 }
