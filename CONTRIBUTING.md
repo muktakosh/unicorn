@@ -16,7 +16,7 @@ LICENSE or that you do not own the right to dedicate to public domain.
 
 ### Pre-requisites
 
-- Install [Rust](https://www.rust-lang.org/) `stable` (v1.11.0+) and `nightly` (v1.13+). We recommend using [`rustup`](https://www.rustup.rs/).
+- Install [Rust](https://www.rust-lang.org/) `stable` (v1.12.0+) and `nightly` (v1.14.0+). We recommend using [`rustup`](https://www.rustup.rs/).
 - Install Make.
 - Clone the repo.
 
