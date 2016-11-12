@@ -1,3 +1,3 @@
 //! unicorn's API handlers
 
-pub mod register;
+pub mod topic;

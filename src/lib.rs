@@ -19,7 +19,6 @@ extern crate serde_json;
 extern crate log;
 
 extern crate ws;
-extern crate jsonrpc_core;
 
 pub mod api;
 pub mod config;
@@ -27,6 +26,7 @@ pub mod datastore;
 pub mod kernel;
 pub mod logger;
 pub mod network;
+pub mod router;
 
 /// Defines schemas (datatypes) used by API
 #[cfg(feature = "serde_derive")]

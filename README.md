@@ -80,7 +80,7 @@ This is the list of currently targeted broad feature set for `unicorn`:
  - [x] Config creator
  - [ ] Multi-mode config (single instance vs distributed)
 - [ ] **Network layer**
-  - [x] JSON-RPC over WebSockets
+  - [x] WebSockets & command parser
   - [ ] Internal communication (Asynchronous TCP)
 - [ ] **Data transmission features**
   - [ ] Channels (a.k.a Rooms/Topics)

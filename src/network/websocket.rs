@@ -1,10 +1,54 @@
 //! WebSocket implementation for unicorn.
 
 use ws::{WebSocket as WS, Factory, Sender, Handler, Result, Message, Handshake, CloseCode};
-use jsonrpc_core::{IoHandler, SyncMethodCommand, AsyncMethodCommand};
+use serde_json;
 
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::fmt;
+use std::collections::HashMap;
+use std::clone::Clone;
+
+use schema::message_schema::{MessageRequest, MessageResponse};
+
+/// Trait to implement handling of Sender
+pub trait APIHandlerCommand {
+    fn execute(&mut self, ws: Sender, msg: Message) -> Option<MessageResponse>;
+}
+
+/// Handler for websocket
+#[derive(Debug, Clone)]
+pub struct APIHandler<'a, H: APIHandlerCommand + 'static> {
+    handlers: HashMap<&'a str, H>,
+}
+
+impl<'a, H: APIHandlerCommand + 'static> APIHandler<'a, H> {
+    pub fn new() -> Self {
+        APIHandler { handlers: HashMap::new() }
+    }
+
+    pub fn add_handler(&mut self, id: &'a str, handler: H) {
+        self.handlers.insert(id, handler);
+    }
+
+    pub fn handle(&mut self, s: Sender, m: Message) -> Option<MessageResponse> {
+        if m.is_text() {
+            let req = match serde_json::from_str::<MessageRequest>(m.as_text().unwrap_or("")) {
+                Ok(req) => req,
+                Err(e) => {
+                    error!("{:}", e);
+                    return Some(MessageResponse::error("unicorn.error", "InvalidRequest"));
+                }
+            };
+            match self.handlers.get_mut(&req.method[..]) {
+                Some(h) => return h.execute(s, m),
+                None => {
+                    return Some(MessageResponse::error("unicorn.error", "MethodNotFound"));
+                }
+            }
+        }
+        None
+    }
+}
 
 /// Types of `Socket`
 pub enum SocketType {
@@ -23,14 +67,14 @@ impl fmt::Display for SocketType {
 }
 
 /// WebSocket handler that handles each connection
-struct SocketHandler {
+struct SocketHandler<'a, H: APIHandlerCommand + 'static> {
     id: u64,
     sender: Sender,
-    jrpc_handler: Arc<IoHandler>,
+    handler: Arc<Mutex<APIHandler<'a, H>>>,
     conn_type: SocketType,
 }
 
-impl Handler for SocketHandler {
+impl<'a, H: APIHandlerCommand + 'static> Handler for SocketHandler<'a, H> {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         debug!("[socket] Opening connection. sender: {}. Type: {}",
                self.id,
@@ -40,12 +84,12 @@ impl Handler for SocketHandler {
     }
 
     fn on_message(&mut self, m: Message) -> Result<()> {
-        let sclone = self.sender.clone();
-
-        if let Some(ps) = self.jrpc_handler.handle_request(m.as_text().unwrap_or("")) {
-            ps.on_result(move |s: String| {
-                let _ = sclone.send(Message::text(s));
-            });
+        if let Ok(mut l) = self.handler.lock() {
+            if let Some(res) = l.handle(self.sender.clone(), m) {
+                if let Ok(t) = serde_json::to_string(&res) {
+                    let _ = self.sender.send(Message::Text(t));
+                }
+            }
         }
         Ok(())
     }
@@ -59,76 +103,62 @@ impl Handler for SocketHandler {
 }
 
 /// Factory for generating `SocketHandler`
-struct SocketFactory {
-    jrpc_handler: Arc<IoHandler>,
+struct SocketFactory<'a, H: APIHandlerCommand + 'static> {
+    handler: Arc<Mutex<APIHandler<'a, H>>>,
     counter: u64,
 }
 
-impl SocketFactory {
-    fn new_handler(&mut self, s: Sender, t: SocketType) -> SocketHandler {
+impl<'a, H: APIHandlerCommand + 'static> SocketFactory<'a, H> {
+    fn new_handler(&mut self, s: Sender, t: SocketType) -> SocketHandler<'a, H> {
         self.counter = self.counter + 1;
         SocketHandler {
             id: self.counter,
             sender: s,
-            jrpc_handler: self.jrpc_handler.clone(),
+            handler: self.handler.clone(),
             conn_type: t,
         }
     }
 }
 
-impl Factory for SocketFactory {
-    type Handler = SocketHandler;
+impl<'a, H: APIHandlerCommand + 'static> Factory for SocketFactory<'a, H> {
+    type Handler = SocketHandler<'a, H>;
 
-    fn connection_made(&mut self, s: Sender) -> SocketHandler {
+    fn connection_made(&mut self, s: Sender) -> SocketHandler<'a, H> {
         self.new_handler(s, SocketType::Client)
     }
 
-    fn server_connected(&mut self, s: Sender) -> SocketHandler {
+    fn server_connected(&mut self, s: Sender) -> SocketHandler<'a, H> {
         self.new_handler(s, SocketType::Server)
     }
 }
 
 /// JSON-RPC over WebSockets implementation with multi-client support
-pub struct WebSocket {
-    sock: Option<WS<SocketFactory>>,
-    jrpc_handler: Arc<IoHandler>,
+pub struct WebSocket<'a, H: APIHandlerCommand + 'static> {
+    sock: Option<WS<SocketFactory<'a, H>>>,
+    handler: APIHandler<'a, H>,
 }
 
-impl WebSocket {
+impl<'a, H: APIHandlerCommand + 'static> WebSocket<'a, H> {
     pub fn new() -> Self {
         // Do more stuff here
         WebSocket {
             sock: None,
-            jrpc_handler: Arc::new(IoHandler::new()),
+            handler: APIHandler::new(),
         }
     }
 
-    pub fn add_sync_method<C>(&mut self, name: &str, command: C)
-        where C: SyncMethodCommand + 'static
-    {
-        self.jrpc_handler.add_method(name, command);
+    pub fn add_method(&mut self, name: &'a str, command: H) {
+        self.handler.add_handler(name, command);
     }
 
-    pub fn add_method<AC>(&mut self, name: &str, command: AC)
-        where AC: AsyncMethodCommand + 'static
-    {
-        self.jrpc_handler.add_async_method(name, command);
-    }
-
-    pub fn listen(mut self, addr: &str) -> Result<Self> {
-        self = try!(self.build());
-
-        self.sock = Some(try!(self.sock.unwrap().listen(addr)));
-        Ok(self)
-    }
-
-    fn build(mut self) -> Result<Self> {
+    pub fn listen(mut self, addr: &str) -> Result<()> {
         let factory = SocketFactory {
-            jrpc_handler: self.jrpc_handler.clone(),
+            handler: Arc::new(Mutex::new(self.handler)),
             counter: 0,
         };
-        let s = try!(WS::new(factory));
-        self.sock = Some(s);
-        Ok(self)
+        let s = WS::new(factory)?;
+
+        self.sock = Some(s.listen(addr).unwrap());
+        Ok(())
     }
 }

@@ -2,7 +2,12 @@
 
 use network::websocket::WebSocket;
 use api;
+use router::{Registry, RouterCommand};
 use schema::config_schema::{Config, Service};
+
+use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 /// Entry point for `kernel`
 pub fn run(conf: Config) {
@@ -12,8 +17,27 @@ pub fn run(conf: Config) {
 
     let mut socket = WebSocket::new();
 
-    // Add methods
-    socket.add_method("unicorn.register", api::register::RegisterAPI{});
+    let (tx, rx) = channel::<RouterCommand>();
+
+    thread::spawn(move || {
+        let mut reg = Registry::new();
+        loop {
+            match rx.recv() {
+                Ok(c) => reg.parse_command(c),
+                Err(e) => error!("Error parsing command: {}", e),
+            }
+        }
+    });
+
+    // Add topic methods
+    let topicapi = api::topic::TopicAPI::with_tx(Arc::new(Mutex::new(tx.clone())));
+    socket.add_method("unicorn.topic.create", topicapi.clone().set_type("create"));
+
+    socket.add_method("unicorn.topic.subscribe",
+                      topicapi.clone().set_type("subscribe"));
+
+    socket.add_method("unicorn.topic.send",
+                      topicapi.clone().set_type("send"));
 
     // Start the listener
     socket.listen(kernelconf.address().as_ref()).unwrap();
