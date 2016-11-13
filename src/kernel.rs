@@ -31,13 +31,13 @@ pub fn run(conf: Config) {
 
     // Add topic methods
     let topicapi = api::topic::TopicAPI::with_tx(Arc::new(Mutex::new(tx.clone())));
-    socket.add_method("unicorn.topic.create", topicapi.clone().set_type("create"));
+    socket.add_method("topic.create", topicapi.clone().set_type("create"));
 
-    socket.add_method("unicorn.topic.subscribe",
+    socket.add_method("topic.subscribe",
                       topicapi.clone().set_type("subscribe"));
 
-    socket.add_method("unicorn.topic.send",
-                      topicapi.clone().set_type("send"));
+    socket.add_method("topic.publish",
+                      topicapi.clone().set_type("publish"));
 
     // Start the listener
     socket.listen(kernelconf.address().as_ref()).unwrap();

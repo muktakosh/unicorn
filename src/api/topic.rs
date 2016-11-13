@@ -11,13 +11,13 @@ use network::websocket::APIHandlerCommand;
 use router::RouterCommand;
 use schema::message_schema::MessageResponse;
 use schema::message_schema::MessageRequestText;
-use schema::topic_schema::{TopicCreate, TopicMessage, TopicSubscribe};
+use schema::topic_schema::{TopicCreate, TopicPublish, TopicSubscribe};
 
 #[derive(Clone)]
 enum ActionType {
     Create,
-    Send,
     Subscribe,
+    Publish
 }
 
 #[derive(Clone)]
@@ -37,7 +37,7 @@ impl TopicAPI {
     pub fn set_type(mut self, t: &str) -> Self {
         self.actiontype = match t {
             "create" => Some(ActionType::Create),
-            "send" => Some(ActionType::Send),
+            "publish" => Some(ActionType::Publish),
             "subscribe" => Some(ActionType::Subscribe),
             _ => None,
         };
@@ -62,11 +62,11 @@ impl APIHandlerCommand for TopicAPI {
                     return Some(MessageResponse::error("unicorn.topic.create", "InvalidPayload"));
                 }
             }
-            Some(ActionType::Send) => {
-                if let Ok(q) = from_str::<MessageRequestText<TopicMessage>>(m.as_text().unwrap_or("")) {
+            Some(ActionType::Publish) => {
+                if let Ok(q) = from_str::<MessageRequestText<TopicPublish>>(m.as_text().unwrap_or("")) {
                     let payload = q.payload.unwrap();
                     self.transmit(RouterCommand::Send(payload.topic_id,
-                                                      payload.sender_id,
+                                                      payload.publisher_id,
                                                       WSMessage::text(payload.message)));
                     return None;
                 } else {

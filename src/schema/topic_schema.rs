@@ -15,8 +15,8 @@ pub struct TopicSubscribe {
 
 /// Send message to topic
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct TopicMessage {
+pub struct TopicPublish {
     pub topic_id: String,
-    pub sender_id: String,
+    pub publisher_id: String,
     pub message: String,
 }
