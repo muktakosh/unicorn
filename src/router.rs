@@ -8,6 +8,7 @@ pub enum RouterCommand {
     Subscribe(String, String, Sender),
     Send(String, String, Message),
     Broadcast(String, Message),
+    Unsubscribe(String, String),
 }
 
 pub struct Topic {
@@ -72,6 +73,12 @@ impl Registry {
         topic.add_subscriber(subscriber_id, sender);
     }
 
+    pub fn unsubscribe(&mut self, topic_id: &String, subscriber_id: &String) {
+        if let Some(mut t) = self.topics.get_mut(topic_id) {
+            t.remove_subscriber(subscriber_id);
+        }
+    }
+
     pub fn send(&mut self, topic_id: &String, sender_id: &String, m: Message) {
         if let Some(t) = self.topics.get(topic_id) {
             t.send(sender_id, m);
@@ -90,6 +97,7 @@ impl Registry {
             RouterCommand::Subscribe(tid, sid, s) => self.subscribe(tid, sid, s),
             RouterCommand::Broadcast(tid, m) => self.broadcast(&tid, m),
             RouterCommand::Send(tid, sid, m) => self.send(&tid, &sid, m),
+            RouterCommand::Unsubscribe(tid, sid) => self.unsubscribe(&tid, &sid),
         }
     }
 }

@@ -17,7 +17,8 @@ use schema::topic_schema::{TopicCreate, TopicPublish, TopicSubscribe};
 enum ActionType {
     Create,
     Subscribe,
-    Publish
+    Publish,
+    Unsubscribe
 }
 
 #[derive(Clone)]
@@ -39,6 +40,7 @@ impl TopicAPI {
             "create" => Some(ActionType::Create),
             "publish" => Some(ActionType::Publish),
             "subscribe" => Some(ActionType::Subscribe),
+            "unsubscribe" => Some(ActionType::Unsubscribe),
             _ => None,
         };
         self
@@ -53,13 +55,15 @@ impl TopicAPI {
 
 impl APIHandlerCommand for TopicAPI {
     fn execute(&mut self, s: WSSender, m: WSMessage) -> Option<MessageResponse> {
+        let invalid_payload = Some(MessageResponse::error("topic", "InvalidPayload"));
+
         match self.actiontype {
             Some(ActionType::Create) => {
                 if let Ok(q) = from_str::<MessageRequestText<TopicCreate>>(m.as_text().unwrap_or("")) {
                     self.transmit(RouterCommand::CreateTopic(q.payload.unwrap().topic_id));
                     return None;
                 } else {
-                    return Some(MessageResponse::error("unicorn.topic.create", "InvalidPayload"));
+                    return invalid_payload;
                 }
             }
             Some(ActionType::Publish) => {
@@ -70,7 +74,7 @@ impl APIHandlerCommand for TopicAPI {
                                                       WSMessage::text(payload.message)));
                     return None;
                 } else {
-                    return Some(MessageResponse::error("unicorn.topic.send", "InvalidPayload"));
+                    return invalid_payload;
                 }
             }
             Some(ActionType::Subscribe) => {
@@ -81,7 +85,17 @@ impl APIHandlerCommand for TopicAPI {
                                                            s.clone()));
                     return None;
                 } else {
-                    return Some(MessageResponse::error("unicorn.topic.send", "InvalidPayload"));
+                    return invalid_payload;
+                }
+            }
+            Some(ActionType::Unsubscribe) => {
+                if let Ok(q) = from_str::<MessageRequestText<TopicSubscribe>>(m.as_text().unwrap_or("")) {
+                    let payload = q.payload.unwrap();
+                    self.transmit(RouterCommand::Unsubscribe(payload.topic_id,
+                                                             payload.subscriber_id));
+                    return None;
+                } else {
+                    return invalid_payload;
                 }
             }
             None => return None,

@@ -32,12 +32,9 @@ pub fn run(conf: Config) {
     // Add topic methods
     let topicapi = api::topic::TopicAPI::with_tx(Arc::new(Mutex::new(tx.clone())));
     socket.add_method("topic.create", topicapi.clone().set_type("create"));
-
-    socket.add_method("topic.subscribe",
-                      topicapi.clone().set_type("subscribe"));
-
-    socket.add_method("topic.publish",
-                      topicapi.clone().set_type("publish"));
+    socket.add_method("topic.subscribe", topicapi.clone().set_type("subscribe"));
+    socket.add_method("topic.publish", topicapi.clone().set_type("publish"));
+    socket.add_method("topic.unsubscribe", topicapi.clone().set_type("unsubscribe"));
 
     // Start the listener
     socket.listen(kernelconf.address().as_ref()).unwrap();
