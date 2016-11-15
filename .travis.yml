@@ -4,16 +4,17 @@ cache: cargo
 git:
   depth: 3
 
-rust:
-  - stable
-  - beta
-  - nightly
 matrix:
+  fast_finish: true
+  include:
+    - rust: nightly
+      env: FEATURES="--no-default-features --features nightly"
+    - rust: beta
+    - rust: stable
   allow_failures:
     - rust: nightly
-    - rust: beta
 
 script:
-  - make clean
-  - make build
-  - make test
+  - cargo clean
+  - cargo build --verbose $FEATURES
+  - cargo test --verbose $FEATURES
