@@ -98,7 +98,7 @@ impl APIHandlerCommand for TopicAPI {
                     return invalid_payload;
                 }
             }
-            None => return None,
+            None => None,
         }
     }
 }

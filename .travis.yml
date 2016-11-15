@@ -1,6 +1,9 @@
 language: rust
 cache: cargo
 
+git:
+  depth: 3
+
 rust:
   - stable
   - beta

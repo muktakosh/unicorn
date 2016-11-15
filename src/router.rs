@@ -32,15 +32,15 @@ impl Topic {
         self.subscribers.insert(id, sender);
     }
 
-    pub fn remove_subscriber(&mut self, id: &String) {
+    pub fn remove_subscriber(&mut self, id: &str) {
         self.subscribers.remove(id);
     }
 
-    pub fn get_subscriber(&self, id: &String) -> Option<&Sender> {
+    pub fn get_subscriber(&self, id: &str) -> Option<&Sender> {
         self.subscribers.get(id)
     }
 
-    pub fn send(&self, sender_id: &String, m: Message) {
+    pub fn send(&self, sender_id: &str, m: Message) {
         for (id, sender) in &self.subscribers {
             if id != sender_id {
                 let _ = sender.send(m.clone());
@@ -55,11 +55,14 @@ impl Topic {
     }
 }
 
+
+#[derive(Default)]
 pub struct Registry {
     topics: HashMap<String, Topic>,
 }
 
 impl Registry {
+
     pub fn new() -> Self {
         Registry { topics: HashMap::new() }
     }
@@ -69,23 +72,23 @@ impl Registry {
     }
 
     pub fn subscribe(&mut self, topic_id: String, subscriber_id: String, sender: Sender) {
-        let topic = self.topics.entry(topic_id.clone()).or_insert(Topic::new(topic_id));
+        let topic = self.topics.entry(topic_id.clone()).or_insert_with(|| Topic::new(topic_id));
         topic.add_subscriber(subscriber_id, sender);
     }
 
-    pub fn unsubscribe(&mut self, topic_id: &String, subscriber_id: &String) {
+    pub fn unsubscribe(&mut self, topic_id: &str, subscriber_id: &str) {
         if let Some(mut t) = self.topics.get_mut(topic_id) {
             t.remove_subscriber(subscriber_id);
         }
     }
 
-    pub fn send(&mut self, topic_id: &String, sender_id: &String, m: Message) {
+    pub fn send(&mut self, topic_id: &str, sender_id: &str, m: Message) {
         if let Some(t) = self.topics.get(topic_id) {
             t.send(sender_id, m);
         }
     }
 
-    pub fn broadcast(&mut self, topic_id: &String, m: Message) {
+    pub fn broadcast(&mut self, topic_id: &str, m: Message) {
         if let Some(t) = self.topics.get(topic_id) {
             t.broadcast(m);
         }

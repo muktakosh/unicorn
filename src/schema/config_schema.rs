@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 /// Main configuration data structure
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct Config {
     /// Services configuration
     pub services: HashMap<String, Service>,

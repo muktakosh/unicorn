@@ -8,6 +8,10 @@
 
 #![cfg_attr(feature = "serde_derive", feature(proc_macro))]
 
+#![cfg_attr(feature="clippy", feature(plugin))]
+
+#![cfg_attr(feature="clippy", plugin(clippy))]
+
 #[cfg(feature = "serde_derive")]
 #[macro_use]
 extern crate serde_derive;

@@ -6,15 +6,14 @@ use log::*;
 pub struct CLILogger;
 
 impl CLILogger {
-    pub fn init<'a>(level: &'a str) -> Result<(), SetLoggerError> {
+    pub fn init(level: &str) -> Result<(), SetLoggerError> {
         set_logger(|max_log_level| {
             max_log_level.set(match level {
-                "info" => LogLevelFilter::Info,
                 "debug" => LogLevelFilter::Debug,
                 "error" => LogLevelFilter::Error,
                 "warn" => LogLevelFilter::Warn,
                 "trace" => LogLevelFilter::Trace,
-                _ => LogLevelFilter::Info
+                "info" | _ => LogLevelFilter::Info,
             });
             Box::new(CLILogger)
         })

@@ -74,7 +74,7 @@ fn main() {
     }
 
     // Init configuration: `init` subcommand
-    if let Some(_) = matches.subcommand_matches("init") {
+    if matches.subcommand_matches("init").is_some() {
         match unicorn::config::init() {
             Ok(()) => {
                 info!("Created config file in ./unicorn.json");
@@ -92,7 +92,7 @@ fn main() {
     let mut configpath = "unicorn.json";
 
     if matches.is_present("config") {
-        if let Some(ref c) = matches.value_of("config") {
+        if let Some(c) = matches.value_of("config") {
             configpath = c;
         }
     }
@@ -112,7 +112,7 @@ fn main() {
     };
 
     // Parse the `run` subcommand
-    if let Some(ref run) = matches.subcommand_matches("run") {
+    if let Some(run) = matches.subcommand_matches("run") {
         if run.is_present("component") {
             match run.value_of("component") {
                 Some("api") => unicorn::kernel::run(conf),

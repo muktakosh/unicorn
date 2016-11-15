@@ -1,4 +1,4 @@
-//! WebSocket implementation for unicorn.
+//! `WebSocket` implementation for unicorn.
 
 use ws::{WebSocket as WS, Factory, Sender, Handler, Result, Message, Handshake, CloseCode};
 use serde_json;
@@ -66,7 +66,7 @@ impl fmt::Display for SocketType {
     }
 }
 
-/// WebSocket handler that handles each connection
+/// `WebSocket` handler that handles each connection
 struct SocketHandler<'a, H: APIHandlerCommand + 'static> {
     id: u64,
     sender: Sender,
@@ -110,7 +110,7 @@ struct SocketFactory<'a, H: APIHandlerCommand + 'static> {
 
 impl<'a, H: APIHandlerCommand + 'static> SocketFactory<'a, H> {
     fn new_handler(&mut self, s: Sender, t: SocketType) -> SocketHandler<'a, H> {
-        self.counter = self.counter + 1;
+        self.counter += 1;
         SocketHandler {
             id: self.counter,
             sender: s,
@@ -132,7 +132,7 @@ impl<'a, H: APIHandlerCommand + 'static> Factory for SocketFactory<'a, H> {
     }
 }
 
-/// JSON-RPC over WebSockets implementation with multi-client support
+/// JSON over `WebSockets` implementation with multi-client support
 pub struct WebSocket<'a, H: APIHandlerCommand + 'static> {
     sock: Option<WS<SocketFactory<'a, H>>>,
     handler: APIHandler<'a, H>,

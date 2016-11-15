@@ -1,1 +1,1 @@
-//! DataStore abstraction for `unicorn`.
+//! `DataStore` abstraction for `unicorn`.
