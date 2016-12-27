@@ -13,7 +13,7 @@ use std::thread;
 pub fn run(conf: Config) {
     debug!("Starting kernel...");
 
-    let kernelconf: &Service = conf.services.get("api").unwrap();
+    let kernelconf: &Service = &conf.services["api"];
 
     let mut socket = WebSocket::new();
 
